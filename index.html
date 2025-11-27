@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Blueprint Layout</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Blueprint Layout</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Define the CSS variable for scale, controlled by JavaScript */
+        :root {
+            --scale: 1.0;
+            
+            /* Theme Variables - Dark (Default) */
+            --bg-color: #0b1c3c;
+            --text-color: #d1f7ff;
+            --corridor-bg: rgba(209, 247, 255, 0.05);
+            --border-color: #d1f7ff;
+            --header-bg: #0b1c3c;
+            --button-text: #d1f7ff;
+        }
+
+        /* Light Theme Variables */
+        .light-theme {
+            --bg-color: #ffffff;
+            --text-color: #0b1c3c;
+            --corridor-bg: rgba(11, 28, 60, 0.05);
+            --border-color: #0b1c3c;
+            --header-bg: #f0f0f0;
+            --button-text: #0b1c3c;
+        }
+
+        /* Custom styles to enhance the blueprint look */
+        .blueprint-body {
+            /* Use a monospaced font for a technical look */
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: var(--bg-color);
+            /* Dark blueprint blue */
+            color: var(--text-color);
+            /* Light cyan/white for lines and text */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- ZOOM STYLES --- */
+        #zoomable-content {
+            /* Apply the zoom transform based on the CSS variable */
+            transform: scale(var(--scale));
+            transform-origin: top left;
+            /* Zoom relative to the top-left corner */
+            transition: transform 0.2s ease-out;
+            /* Smooth transition for zooming */
+            width: fit-content;
+            /* Allows content to grow past container width when zoomed */
+            height: fit-content;
+            padding: 2rem;
+            /* Restore the original padding applied to the body */
+        }
+
+        #zoomable-container {
+            flex-grow: 1;
+            overflow: auto;
+            /* Handles scrolling when content is zoomed larger than viewport */
+            /* Default cursor */
+            cursor: default;
+        }
+
+        /* Cursor styles for panning (grabbing hand) */
+        .can-pan {
+            cursor: grab;
+        }
+
+        .is-panning {
+            cursor: grabbing;
+        }
+
+        /* --- END ZOOM STYLES --- */
+
+        .room {
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.6rem;
+            line-height: 1;
+            padding: 0.25rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* The main container uses a grid for overall layout */
+        .main-grid {
+            /* Define 12 columns for fine-grained control */
+            grid-template-columns: repeat(12, 1fr);
+            /* Define rows based on the main sections */
+            grid-template-rows: auto 1fr auto;
+            max-width: 1000px;
+            /* Limit max width for readability */
+        }
+
+        .corridor {
+            background-color: var(--corridor-bg);
+            /* Slightly lighter blue for corridor */
+            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+        }
+
+        .separated-entrance {
+            width: 15%;
+            min-width: 150px;
+            height: 10vh;
+            border: 1px solid var(--border-color);
+            background-color: var(--corridor-bg);
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .entrance-arch {
+            position: absolute;
+            bottom: -0.5rem;
+            width: 100%;
+            height: 2rem;
+            border-radius: 0 0 50% 50% / 0 0 100% 100%;
+            border: 2px dashed var(--border-color);
+            border-top: none;
+            box-sizing: content-box;
+            z-index: 10;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .room {
+                font-size: 0.8rem;
+                padding: 0.5rem;
+            }
+
+            .corridor {
+                font-size: 0.65rem;
+            }
+        }
+        
+        /* Utility classes for dynamic colors */
+        .dynamic-bg { background-color: var(--bg-color); }
+        .dynamic-text { color: var(--text-color); }
+        .dynamic-border { border-color: var(--border-color); }
+        .dynamic-header-bg { background-color: var(--header-bg); }
+    </style>
+</head>
+
+<body class="blueprint-body">
+
+    <!-- Header and Controls (Styled to fit the blueprint theme) -->
+    <header class="dynamic-header-bg border-b dynamic-border p-3 sticky top-0 z-10 transition-colors duration-300">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
+            <h1 class="text-xl font-extrabold dynamic-text">ALIET COLLEGE BLUEPRINT</h1>
+
+            <!-- Controls -->
+            <div class="flex space-x-3 text-sm items-center">
+                <!-- Theme Toggle -->
+                <button id="themeToggleBtn" onclick="toggleTheme()"
+                    class="flex items-center px-3 py-1 bg-gray-600/70 dynamic-text font-semibold rounded-lg shadow-md hover:bg-gray-500 transition duration-150 ease-in-out border dynamic-border">
+                    <span id="themeIcon" class="mr-1">☀️</span>
+                    <span id="themeText">Light Mode</span>
+                </button>
+
+                <!-- Zoom Controls -->
+                <button id="zoomOutBtn" onclick="zoomOut()"
+                    class="flex items-center px-3 py-1 bg-red-600/70 dynamic-text font-semibold rounded-lg shadow-md hover:bg-red-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed border dynamic-border">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 12h4m-2-2v4"></path>
+                    </svg>
+                    Zoom Out
+                </button>
+                <span id="scaleDisplay"
+                    class="flex items-center text-sm font-mono dynamic-text bg-opacity-50 border dynamic-border px-3 py-1 rounded-lg shadow-inner" style="background-color: var(--bg-color)">100%</span>
+                <button id="zoomInBtn" onclick="zoomIn()"
+                    class="flex items-center px-3 py-1 bg-blue-600/70 dynamic-text font-semibold rounded-lg shadow-md hover:bg-blue-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed border dynamic-border">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                    </svg>
+                    Zoom In
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="flex justify-between items-center w-full">
+        <div class="flex-grow text-center dynamic-text pt-4">GROUND FLOOR</div>
+        <img src="https://res.cloudinary.com/dtnd5y07t/image/upload/v1764260784/W-removebg-preview_zik6ks.png" style="width:100px;height:100px;">
+    </div>
+    <!-- Main Content Area: Scrollable container for the zoomed content -->
+    <div id="zoomable-container" class="flex-grow flex justify-center items-start p-4">
+
+        <!-- Zoomable Content Wrapper: This DIV gets the CSS transform applied -->
+        <div id="zoomable-content" class="flex flex-col items-center">
+
+            <div class="main-grid w-full h-full grid relative shadow-2xl shadow-blue-900/50">
+
+                <!-- Section 1: Top Perimeter Rooms and Corridor (Compressed) -->
+                <!-- Wrapper now spans 8 columns and starts at column 3 -->
+                <div class="col-span-12 grid grid-cols-12">
+                    <div class="col-start-3 col-span-8">
+                        <div class="flex">
+                            <div class="room w-1/12">STAIRS</div>
+                            <div class="flex-grow flex w-10/12">
+                                <div class="room w-1/6">LADES WASHROOMS</div>
+                                <div class="room w-1/6">CHEMISTRY LAB</div>
+                                <div class="room w-1/6">IQAC CELL</div>
+                                <div class="room w-1/6">PLACEMENT CELL</div>
+                                <div class="room w-1/6">SBM DEPARTMENT</div>
+                                <div class="room w-1/6">PHYSICS LAB</div>
+                            </div>
+                            <div class="room w-1/12 border-l-0">STAIRS</div>
+                        </div>
+                        <div class="corridor py-1">CORRIDOR</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Main Central Area (Side Labs, Gardens, Corridors) -->
+                <!-- Height reduced from 50vh to 47vh to accommodate the new central corridor -->
+                <div class="col-span-12 grid grid-cols-12" style="height: 47vh;">
+
+                    <!-- Left Wing (Rooms + Corridor) -->
+                    <div class="col-span-2 flex h-full border-r dynamic-border">
+                        <!-- Column for Rooms (70% of the wing width) -->
+                        <div class="flex flex-col h-full w-[70%]">
+                            <div class="room h-1/6 border-t-0 border-r-0">SIEMENS LAB</div>
+                            <div class="room h-1/6 border-r-0">SIMULATION LAB</div>
+                            <div class="room h-1/6 border-r-0">SKILL DEVELOPMENT LAB</div>
+                            <!-- SOUTH SEMINAR HALL expands to fill the space left by LIFT -->
+                            <div class="room h-1/2 border-r-0 border-b-0">SOUTH SEMINAR HALL</div>
+                        </div>
+                        <!-- Column for Corridor (30% of the wing width) -->
+                        <div class="corridor h-full w-[30%] flex items-center justify-center text-xs border-r-0">
+                            CORRIDOR
+                        </div>
+                    </div>
+
+                    <!-- Central Garden Area (Height reduced) -->
+                    <div class="col-span-8 grid grid-cols-2 grid-rows-2 p-4">
+                        <div class="room m-2 flex-col">GARDEN</div>
+                        <div class="room m-2">GARDEN</div>
+                        <div class="room m-2">GARDEN</div>
+                        <div class="room m-2">GARDEN</div>
+                    </div>
+
+                    <!-- Right Wing (Corridor + Rooms) -->
+                    <div class="col-span-2 flex h-full border-l dynamic-border">
+                        <!-- Column for Corridor (30% of the wing width) - INNER SIDE -->
+                        <div
+                            class="corridor h-full w-[30%] flex items-center justify-center text-xs border-r-0 border-l-0">
+                            CORRIDOR
+                        </div>
+                        <!-- Column for Rooms (70% of the wing width) - OUTER SIDE -->
+                        <div class="flex flex-col h-full w-[70%]">
+                            <div class="room h-1/6 border-t-0 border-l-0">MACHINES LAB</div>
+                            <div class="room h-1/6 border-l-0">FLUID MECHANICS LAB</div>
+                            <div class="room h-1/6 border-l-0">CONTROL SYSTEMS LAB</div>
+                            <!-- SOUTH SEMINAR HALL now takes the full remaining 1/2 height (1/6 + 1/3) -->
+                            <div class="room h-1/2 border-l-0">SOUTH SEMINAR HALL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW CENTRAL CORRIDOR SECTION (Corridor and Stairs) -->
+                <div class="col-span-12 corridor py-1 flex items-center justify-center relative" style="height: 3vh;">
+                    <span class="absolute left-2 opacity-75 text-[0.4rem] sm:text-[0.6rem]">LIFT</span>
+                    <span class="text-xs sm:text-sm font-bold border dynamic-border px-2">STAIRS</span>
+                    <span class="absolute right-2 opacity-75 text-[0.4rem] sm:text-[0.6rem]">WASHROOMS</span>
+                    <!-- Adding the central CORRIDOR text -->
+                    <span
+                        class="absolute opacity-20 text-xs sm:text-sm tracking-widest pointer-events-none">CORRIDOR</span>
+                </div>
+
+                <!-- Section 3: Bottom Rooms and Entrance Lobby (Now directly adjacent to the new corridor) -->
+                <div class="col-span-12 flex relative" style="height: 15vh;">
+                    <!-- All room widths are now set to flex-1 to ensure equal distribution of space across the 11 rooms -->
+                    <div class="room flex-1 border-b-0 border-t-0">GUEST ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0">WAITING ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0">PRINCIPAL ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0">DIRECTOR ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0">OFFICE ROOM</div>
+
+                    <div class="room flex-1 border-b-0 border-t-0 border-l dynamic-border">LOBBY</div>
+
+                    <div class="room flex-1 border-b-0 border-t-0 border-r dynamic-border">ANNOUNCEMENT ROOM</div>
+
+                    <div class="room flex-1 border-b-0 border-t-0">EXAMINATION CELL</div>
+                    <div class="room flex-1 border-b-0 border-t-0">COUNSELING ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0">TREASURE ROOM</div>
+                    <div class="room flex-1 border-b-0 border-t-0 border-r-0">GENTS WASHROOMS</div>
+                </div>
+
+            </div>
+
+            <!-- Separated Entrance -->
+            <div class="separated-entrance flex flex-col items-center justify-center">
+                <div class="relative flex flex-col items-center justify-center h-full w-full p-2">
+                    <span class="text-xs font-bold whitespace-nowrap">ENTRANCE</span>
+                    <span class="text-[0.6rem] opacity-90 mt-1">STATUE</span>
+                    <!-- Re-using entrance-arch for visual consistency -->
+                    <div class="entrance-arch absolute left-0 right-0"></div>
+                </div>
+            </div>
+
+        </div> <!-- End zoomable-content -->
+    </div> <!-- End zoomable-container -->
+
+    <script>
+        // --- Configuration ---
+        const STEP = 0.1; // Amount to increase/decrease scale by
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 2.5;
+
+        // --- Element References ---
+        const root = document.documentElement;
+        const scaleDisplay = document.getElementById('scaleDisplay');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomableContainer = document.getElementById('zoomable-container');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+
+        let currentScale = 1.0;
+
+        // --- Panning State ---
+        let isDragging = false;
+        let startX;
+        let startY;
+        let scrollLeft;
+        let scrollTop;
+
+        /**
+         * Updates the CSS variable and UI elements to reflect the new scale.
+         */
+        function updateZoom(newScale) {
+            // Clamp the scale between min and max limits
+            currentScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale));
+
+            // Set the CSS variable to apply the transformation
+            root.style.setProperty('--scale', currentScale.toFixed(2));
+
+            // Update UI
+            const percent = Math.round(currentScale * 100);
+            scaleDisplay.textContent = `${percent}%`;
+
+            // Disable buttons if limits are reached
+            zoomInBtn.disabled = currentScale >= MAX_SCALE;
+            zoomOutBtn.disabled = currentScale <= MIN_SCALE;
+
+            // Update cursor based on zoom level
+            updatePanCursor();
+        }
+
+        /**
+         * Toggles the 'can-pan' class on the container based on current scale.
+         */
+        function updatePanCursor() {
+            if (currentScale > 1.0) {
+                zoomableContainer.classList.add('can-pan');
+            } else {
+                zoomableContainer.classList.remove('can-pan');
+            }
+        }
+
+        /**
+         * Increases the zoom level.
+         */
+        function zoomIn() {
+            updateZoom(currentScale + STEP);
+        }
+
+        /**
+         * Decreases the zoom level.
+         */
+        function zoomOut() {
+            updateZoom(currentScale - STEP);
+        }
+
+        // --- Theme Logic ---
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            
+            // Update UI
+            if (isLight) {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+            }
+        }
+
+        // --- Panning Logic (Mouse Events) ---
+
+        zoomableContainer.addEventListener('mousedown', (e) => {
+            // Only start dragging if the content is zoomed in
+            if (currentScale > 1.0) {
+                isDragging = true;
+                zoomableContainer.classList.add('is-panning');
+
+                // Record the starting position and current scroll
+                startX = e.pageX - zoomableContainer.offsetLeft;
+                startY = e.pageY - zoomableContainer.offsetTop;
+                scrollLeft = zoomableContainer.scrollLeft;
+                scrollTop = zoomableContainer.scrollTop;
+
+                e.preventDefault(); // Prevent text selection
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            zoomableContainer.classList.remove('is-panning');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            // Calculate how far the mouse has moved
+            const x = e.pageX - zoomableContainer.offsetLeft;
+            const y = e.pageY - zoomableContainer.offsetTop;
+
+            // Calculate the distance and update scroll position
+            const walkX = x - startX; // distance moved since click
+            const walkY = y - startY;
+
+            // Apply the negative of the distance to the scroll position
+            zoomableContainer.scrollLeft = scrollLeft - walkX;
+            zoomableContainer.scrollTop = scrollTop - walkY;
+        });
+
+        // --- Panning Logic (Touch Events) ---
+
+        zoomableContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1 && currentScale > 1.0) {
+                isDragging = true;
+                zoomableContainer.classList.add('is-panning');
+
+                // Use the first touch point
+                const touch = e.touches[0];
+                startX = touch.pageX - zoomableContainer.offsetLeft;
+                startY = touch.pageY - zoomableContainer.offsetTop;
+                scrollLeft = zoomableContainer.scrollLeft;
+                scrollTop = zoomableContainer.scrollTop;
+
+                // e.preventDefault(); // This is handled in touchmove for better native scrolling feel
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+            zoomableContainer.classList.remove('is-panning');
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length > 1) return;
+            e.preventDefault(); // Prevent scrolling the main window
+
+            const touch = e.touches[0];
+            const x = touch.pageX - zoomableContainer.offsetLeft;
+            const y = touch.pageY - zoomableContainer.offsetTop;
+
+            const walkX = x - startX;
+            const walkY = y - startY;
+
+            zoomableContainer.scrollLeft = scrollLeft - walkX;
+            zoomableContainer.scrollTop = scrollTop - walkY;
+        }, { passive: false });
+
+
+        // Initialize the UI on load
+        window.onload = () => {
+            updateZoom(currentScale); // Set initial state, check limits, and set cursor
+            loadTheme(); // Load saved theme
+        };
+
+        // Add keyboard shortcuts for accessibility (Ctrl/Cmd + and Ctrl/Cmd -)
+        document.addEventListener('keydown', (e) => {
+            // Prevent default browser zoom actions
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === '=' || e.key === '+') {
+                    e.preventDefault();
+                    zoomIn();
+                } else if (e.key === '-' || e.key === '_') {
+                    e.preventDefault();
+                    zoomOut();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
